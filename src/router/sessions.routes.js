@@ -1,8 +1,11 @@
 import express from "express";
 import UserManager from "../dao/UserManager.js";
 import passport from "passport";
-import { createHash } from ".././utils.js";
+import { createHash, passportCall, authorization } from ".././utils.js";
 import { isValidPassword } from ".././utils.js";
+import jwt from "jsonwebtoken";
+
+const PRIVATE_KEY = "S3CR3T0";
 
 const router = express.Router();
 const UM = new UserManager();
@@ -10,21 +13,35 @@ const UM = new UserManager();
 router.post(
     "/login",
     passport.authenticate("login", { failureRedirect: "/faillogin" }),
+
     async (req, res) => {
-        console.log("req.user", req.user);
         if (!req.user) {
             return res.status(401).send({
                 status: "Error",
                 message: "Usuario y Contraseña incorrectos!",
             });
         }
+        const { email, password } = req.body;
+
+        let token = jwt.sign(
+            { email: email, password: password, role: "user" },
+            PRIVATE_KEY,
+            { expiresIn: "24h" }
+        );
+        res.cookie("coderCookieToken", token, {
+            maxAge: 3600 * 1000,
+            httpOnly: true,
+        });
+
+        console.log("token", token);
+
         req.session.user = {
             first_name: req.user.first_name,
             last_name: req.user.last_name,
             email: req.user.email,
             age: req.user.age,
         };
-        res.status(200).send({ status: "success", redirect: "/products" });
+        return res.status(200).send({ status: "success", redirect: "/products" });
     }
 );
 
@@ -94,6 +111,10 @@ router.post("/logout", (req, res) => {
         }
         res.redirect("/login");
     });
+});
+
+router.get("/current", passportCall("jwt"), authorization("user"), (req, res) => {
+    res.send({status:"OK", payload:req.user});
 });
 
 export default router;

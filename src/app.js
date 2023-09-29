@@ -1,19 +1,20 @@
 import express from 'express';
-import __dirname from './utils.js';
-import expressHandlebars from "express-handlebars";
 import Handlebars from "handlebars";
-import ProductRouter from './router/product.routes.js';
-import { allowInsecurePrototypeAccess } from '@handlebars/allow-prototype-access'
-import CartRouter from './router/cart.routes.js';
-import viewsRouter from './router/views.routes.js';
+import expressHandlebars from "express-handlebars";
+import __dirname from './utils.js';
 import { Server } from 'socket.io';
-import ChatManager from './dao/ChatManager.js';
+import mongoose from 'mongoose';
+import CartRouter from './router/cart.routes.js';
+import ProductRouter from './router/product.routes.js';
+import viewsRouter from './router/views.routes.js';
+import { allowInsecurePrototypeAccess } from '@handlebars/allow-prototype-access'
 import sessionsRouter from './router/sessions.routes.js'
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
-import mongoose from 'mongoose';
 import passport from "passport";
 import initializePassport from "./config/passport.config.js";
+import ChatManager from './dao/ChatManager.js';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const PORT = 8080;
@@ -51,6 +52,7 @@ app.use(
         }),
     })
 );
+app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 initializePassport();
